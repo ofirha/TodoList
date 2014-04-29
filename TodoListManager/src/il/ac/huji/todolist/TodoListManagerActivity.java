@@ -1,7 +1,7 @@
 package il.ac.huji.todolist;
 
 import java.util.ArrayList;
-import java.util.List;
+//import java.util.List;
 
 import android.net.Uri;
 import android.os.Bundle;
@@ -18,10 +18,11 @@ import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.AdapterView;
 import android.widget.ListView;
-import com.parse.FindCallback;
-import com.parse.ParseException;
+//import com.parse.FindCallback;
+//import com.parse.ParseException;
 import com.parse.ParseObject;
-import com.parse.ParseQuery;
+//import com.parse.ParseQuery;
+import android.os.AsyncTask;
 
 public class TodoListManagerActivity extends Activity {
 	ArrayList<ParseObject> myList;
@@ -34,33 +35,35 @@ public class TodoListManagerActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_todo_list_manager);
 		listFromView = (ListView) findViewById(R.id.lstTodoItems);
-		myList = new ArrayList<ParseObject>();
-		ParseQuery<ParseObject> parseQuery = ParseQuery.getQuery("todo");
-		parseQuery.findInBackground(new FindCallback<ParseObject>() {
-
-			@Override
-			public void done(List<ParseObject> arg0, ParseException arg1) {
-				// TODO Auto-generated method stub
-				if (arg1==null)
-				{
-					// sync list
-					for(ParseObject object:arg0)
-					{
-						myList.add(object);
-					}
-				}
-			}
-			
-		});
-		
+//		myList = new ArrayList<ParseObject>();
+//		ParseQuery<ParseObject> parseQuery = ParseQuery.getQuery("todo");
+//		parseQuery.findInBackground(new FindCallback<ParseObject>() {
+//
+//			@Override
+//			public void done(List<ParseObject> arg0, ParseException arg1) {
+//				// TODO Auto-generated method stub
+//				if (arg1==null)
+//				{
+//					// sync list
+//					for(ParseObject object:arg0)
+//					{
+//						myList.add(object);
+//					}
+//				}
+//			}
+//			
+//		});
+//		
 		helper = new DBHelper(getApplicationContext());
-		SQLiteDatabase todo_dbRead = helper.getReadableDatabase();
-		Cursor curs = todo_dbRead.rawQuery("SELECT * FROM "+DBHelper.table_name, null);
-		DBHelper.minIdAvailable = curs.getCount()+1;
-		adapter = new myCursorAdapter(getApplicationContext(), curs);
-		listFromView.setAdapter(adapter);
+		//SQLiteDatabase todo_dbRead = helper.getReadableDatabase();
+		//Cursor curs = todo_dbRead.rawQuery("SELECT * FROM "+DBHelper.table_name, null);
+		//DBHelper.minIdAvailable = curs.getCount()+1;
+		//adapter = new myCursorAdapter(getApplicationContext(), curs);
+		//listFromView.setAdapter(adapter);
+		ReloadDB reloader = new ReloadDB();
+		reloader.execute();
 		registerForContextMenu(listFromView);
-		todo_dbRead.close();
+	//	todo_dbRead.close();
 	}
 
 	@Override
@@ -89,24 +92,26 @@ public class TodoListManagerActivity extends Activity {
 		if (resultCode == RESULT_OK) {
 			String task = data.getStringExtra("title");
 			long date = data.getLongExtra("dueDate", 0);
-			SQLiteDatabase todo_dbWrite = helper.getWritableDatabase();
-			ParseObject parseObj = new ParseObject("todo");
+			//SQLiteDatabase todo_dbWrite = helper.getWritableDatabase();
+			//ParseObject parseObj = new ParseObject("todo");
 			ContentValues todoTask = new ContentValues();
 
 			todoTask.put("title", task);
 			todoTask.put("due", date);
 			todoTask.put("_id", DBHelper.minIdAvailable);
-			DBHelper.minIdAvailable++;
-			parseObj.put("title", task);
-			parseObj.put("due", date);
-			parseObj.saveInBackground();
-			myList.add(parseObj);
+			//DBHelper.minIdAvailable++;
+			//parseObj.put("title", task);
+			//parseObj.put("due", date);
+			//parseObj.saveInBackground();
+			//myList.add(parseObj);
 			
-			todo_dbWrite.insert(DBHelper.table_name, null ,todoTask);	
-			SQLiteDatabase todo_dbRead = helper.getReadableDatabase();
-			adapter.changeCursor(todo_dbRead.rawQuery("SELECT * FROM "+DBHelper.table_name, null));
-			todo_dbWrite.close();
-			todo_dbRead.close();
+//			todo_dbWrite.insert(DBHelper.table_name, null ,todoTask);	
+//			SQLiteDatabase todo_dbRead = helper.getReadableDatabase();
+//			adapter.changeCursor(todo_dbRead.rawQuery("SELECT * FROM "+DBHelper.table_name, null));
+//			todo_dbWrite.close();
+//			todo_dbRead.close();
+			UpdateDB updater = new UpdateDB();
+			updater.execute(new ContentValues[]{todoTask});
 		}
 	}
 
@@ -142,39 +147,43 @@ public class TodoListManagerActivity extends Activity {
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
 		AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo)item.getMenuInfo();
-		SQLiteDatabase todo_dbRead = helper.getReadableDatabase();
+		//SQLiteDatabase todo_dbRead = helper.getReadableDatabase();
 		switch (item.getItemId()) {
 		
 		case R.id.menuItemDelete:
-			SQLiteDatabase todo_dbWrite = helper.getWritableDatabase();
-			todo_dbWrite.delete(DBHelper.table_name, "_id="+Integer.toString(info.position+1), null);
-			ParseQuery<ParseObject> parseQuery = new ParseQuery<ParseObject>("todo");
-			parseQuery.whereEqualTo("objectId",myList.get(info.position).getObjectId().trim());
-			parseQuery.findInBackground(new FindCallback<ParseObject>() {
-
-				@Override
-				public void done(List<ParseObject> arg0, ParseException arg1) {
-
-					try {
-
-						arg0.get(0).delete();
-
-					} catch (ParseException e1) {
-
-						e1.printStackTrace();
-					}
-				}
-			});
-
-			myList.remove(info.position);
-			DBHelper.minIdAvailable--;
-			todo_dbWrite.execSQL("update "+DBHelper.table_name+" Set _id=_id-1 where _id>"+Integer.toString(info.position+1));
-			adapter.changeCursor(todo_dbRead.rawQuery("SELECT * FROM "+DBHelper.table_name, null));
-			todo_dbRead.close();
-			todo_dbWrite.close();
+			DeleteFromDB deleter = new DeleteFromDB();
+			deleter.execute(new Integer[]{info.position});
+			
+//			SQLiteDatabase todo_dbWrite = helper.getWritableDatabase();
+//			todo_dbWrite.delete(DBHelper.table_name, "_id="+Integer.toString(info.position+1), null);
+//			ParseQuery<ParseObject> parseQuery = new ParseQuery<ParseObject>("todo");
+//			parseQuery.whereEqualTo("objectId",myList.get(info.position).getObjectId().trim());
+//			parseQuery.findInBackground(new FindCallback<ParseObject>() {
+//
+//				@Override
+//				public void done(List<ParseObject> arg0, ParseException arg1) {
+//
+//					try {
+//
+//						arg0.get(0).delete();
+//
+//					} catch (ParseException e1) {
+//
+//						e1.printStackTrace();
+//					}
+//				}
+//			});
+//
+//			myList.remove(info.position);
+//			DBHelper.minIdAvailable--;
+//			todo_dbWrite.execSQL("update "+DBHelper.table_name+" Set _id=_id-1 where _id>"+Integer.toString(info.position+1));
+//			adapter.changeCursor(todo_dbRead.rawQuery("SELECT * FROM "+DBHelper.table_name, null));
+//			todo_dbRead.close();
+//			todo_dbWrite.close();
 			break;
 		
 		case R.id.menuItemCall:
+			SQLiteDatabase todo_dbRead = helper.getReadableDatabase();
 			Cursor curs = todo_dbRead.rawQuery("Select * from "+ DBHelper.table_name+" Where _id="+Integer.toString(info.position+1), null);
 			curs.moveToFirst();
 			String task = curs.getString(1).trim();
@@ -187,6 +196,75 @@ public class TodoListManagerActivity extends Activity {
 			break;
 		}
 		return true;
+	}
+	
+	private class ReloadDB extends AsyncTask<Void, Void, Cursor>{
+
+		@Override
+		protected Cursor doInBackground(Void... v) {
+
+			SQLiteDatabase todo_dbRead = helper.getReadableDatabase();
+			Cursor curs = todo_dbRead.rawQuery("SELECT * FROM "+DBHelper.table_name, null);
+			DBHelper.minIdAvailable=(curs.getCount()+1);
+			todo_dbRead.close();
+			return curs;
+
+		}
+		@Override
+	    protected void onPostExecute(Cursor c) {
+			adapter = new myCursorAdapter(getApplicationContext(), c);
+			listFromView.setAdapter(adapter);
+	    }
+	}
+
+	private class UpdateDB extends AsyncTask<ContentValues, Void, Void>{
+
+		@Override
+		protected Void doInBackground(ContentValues... tasks) {
+
+			SQLiteDatabase todo_dbWrite = helper.getWritableDatabase();
+			DBHelper.minIdAvailable++;
+			todo_dbWrite.insert(DBHelper.table_name, null ,tasks[0]);	
+			todo_dbWrite.close();
+
+			return null;
+		}
+
+		@Override
+	    protected void onPostExecute(Void v) {
+			SQLiteDatabase todo_dbRead = helper.getReadableDatabase();
+			adapter.changeCursor(todo_dbRead.rawQuery("SELECT * FROM "+DBHelper.table_name, null));
+			todo_dbRead.close();
+	    }
+
+
+	}
+
+
+	private class DeleteFromDB extends AsyncTask<Integer, Void, Integer>{
+
+		@Override
+		protected Integer doInBackground(Integer... position) {
+
+			SQLiteDatabase todo_dbWrite = helper.getWritableDatabase();
+			todo_dbWrite = helper.getWritableDatabase();
+			todo_dbWrite.delete(DBHelper.table_name, "_id="+Integer.toString(position[0]+1), null);
+			todo_dbWrite.close();
+			return position[0];
+		}
+
+		@Override
+	    protected void onPostExecute(Integer position) {
+			SQLiteDatabase todo_dbWrite = helper.getWritableDatabase();
+			SQLiteDatabase todo_dbRead = helper.getReadableDatabase();
+			DBHelper.minIdAvailable--;
+			todo_dbWrite.execSQL("update "+DBHelper.table_name+" Set _id=_id-1 where _id>"+Integer.toString(position+1));
+			adapter.changeCursor(todo_dbRead.rawQuery("SELECT * FROM "+DBHelper.table_name, null));
+			todo_dbWrite.close();
+			todo_dbRead.close();
+	    }
+
+
 	}
 
 }

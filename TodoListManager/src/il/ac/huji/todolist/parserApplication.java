@@ -10,7 +10,7 @@ public class parserApplication extends Application{
 	public void onCreate() {
 		// TODO Auto-generated method stub
 		super.onCreate();
-		Parse.initialize(this, "wVDbH2EHaDhrQcWKi5eoxzZb2r9RyVpbEf90ycFq", "fTzsJZdfFq4KJaFF0ktLkv4gcQvHRSmyxGdL4O7w");
-		ParseUser.enableAutomaticUser();
+		//Parse.initialize(this, "wVDbH2EHaDhrQcWKi5eoxzZb2r9RyVpbEf90ycFq", "fTzsJZdfFq4KJaFF0ktLkv4gcQvHRSmyxGdL4O7w");
+		//ParseUser.enableAutomaticUser();
 	}
 }
